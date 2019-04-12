@@ -9,5 +9,12 @@
             "email": "jon.gilkison@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "mailgun/mailgun-php": "^2.8"
+    },
+  "autoload": {
+    "psr-4": {
+      "Stem\\MailTemplates\\": "classes"
+    }
+  }
 }
