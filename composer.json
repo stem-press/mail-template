@@ -1,5 +1,5 @@
 {
-    "name": "stem/mail-template",
+    "name": "stem-press/mail-template",
     "description": "Package for handling mail templates",
     "type": "wordpress-plugin",
     "license": "LGPL-3.0-or-later",
