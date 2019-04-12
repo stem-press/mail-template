@@ -75,8 +75,13 @@ class MailTemplate extends Post {
 	 * @throws \StoutLogic\AcfBuilder\FieldNameCollisionException
 	 */
 	public static function registerFields() {
-		$templates = apply_filters('heavymetal/mail/templates', []);
-		$templates = array_merge(['none' => 'None'], $templates);
+		$userTemplates = apply_filters('heavymetal/mail/templates', []);
+
+		$templates = ['none' => 'None'];
+
+		foreach($userTemplates as $key => $template) {
+			$templates[$key] = arrayPath($template, 'label', $key);
+		}
 
 		$builder = new FieldsBuilder(static::$postType);
 		$builder->addText('subject')
@@ -103,9 +108,21 @@ class MailTemplate extends Post {
 			->addSelect('html_template', ['label' => 'HTML Template', 'return_format' => 'value'])
 				->setInstructions('The HTML template to use for the email.')
 				->addChoices($templates)
-				->setDefaultValue('none')
-			->addText('html_header', ['label' => 'Header'])
-				->setInstructions('Header to display at the top of the email.')
+				->setDefaultValue('none');
+
+		foreach($userTemplates as $key => $template) {
+			$vars = arrayPath($template, 'vars', []);
+			foreach($vars as $var => $varData) {
+				$label = arrayPath($varData, 'label', ucfirst($var));
+				$instructions = arrayPath($varData, 'instructions', '');
+				$builder
+					->addText('html_template_'.$var, ['label' => $label])
+					->setInstructions($instructions)
+					->conditional('html_template', '==', $key);
+			}
+		}
+
+		$builder
 			->addWysiwyg('body_html', ['label' => 'Body', 'tabs' => 'all', 'tooldbar' => 'full', 'media_upload' => 1])
 				->setInstructions('The body of the email in html format.')
 			->addRepeater('inline_attachments', ['layout' => 'row', 'button_label' => 'Add Image'])
@@ -140,16 +157,26 @@ class MailTemplate extends Post {
 
 	/**
 	 * Renders the HTML template
-	 * @param $text
 	 *
-	 * @return string
+	 * @throws \Samrap\Acf\Exceptions\BuilderException
 	 */
 	public function renderHtmlTemplate($text) {
 		if (empty($this->htmlTemplate) || ($this->htmlTemplate == 'none')) {
 			return $text;
 		}
 
-		return $this->context->ui->render($this->htmlTemplate, ['header' => $this->htmlHeader, 'text' => $text]);
+		$data = ['text' => $text];
+
+		$userTemplates = apply_filters('heavymetal/mail/templates', []);
+		if (!empty($userTemplates[$this->htmlTemplate])) {
+			$template = $userTemplates[$this->htmlTemplate];
+			$vars = arrayPath($template, 'vars', []);
+			foreach($vars as $var => $varData) {
+				$data[$var] = $this->getField('html_template_'.$var);
+			}
+		}
+
+		return $this->context->ui->render($this->htmlTemplate, $data);
 	}
 
 	//endregion
@@ -162,6 +189,7 @@ class MailTemplate extends Post {
 	 *
 	 * @return bool
 	 * @throws \Mailgun\Message\Exceptions\TooManyRecipients
+	 * @throws \Samrap\Acf\Exceptions\BuilderException
 	 */
 	public function send($email=null, $data=[], $inline=[]) {
 		add_filter('max_srcset_image_width', function() { return 1; });
@@ -279,6 +307,7 @@ class MailTemplate extends Post {
 	 *
 	 * @return bool
 	 * @throws \Mailgun\Message\Exceptions\TooManyRecipients
+	 * @throws \Samrap\Acf\Exceptions\BuilderException
 	 */
 	public static function sendTemplate($slugOrTemplate, $email = null, $data=[], $inline=[]) {
 		if ($slugOrTemplate instanceof MailTemplate) {
@@ -303,6 +332,7 @@ class MailTemplate extends Post {
 	/**
 	 * Sends a sample email
 	 * @throws \Mailgun\Message\Exceptions\TooManyRecipients
+	 * @throws \Samrap\Acf\Exceptions\BuilderException
 	 */
 	public static function sendSampleEmail() {
 		if (!current_user_can('edit_posts')) {
