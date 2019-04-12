@@ -10,7 +10,8 @@
         }
     ],
     "require": {
-        "mailgun/mailgun-php": "^2.8"
+        "mailgun/mailgun-php": "^2.8",
+        "stem/stem-press": ">=0.5.2"
     },
   "autoload": {
     "psr-4": {
