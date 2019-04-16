@@ -44,10 +44,6 @@ class MailTemplate extends Post {
 
 	public static function initialize() {
 		parent::initialize();
-
-		if (is_admin() && current_user_can('edit_posts')) {
-			add_action('wp_ajax_send_sample_email', [MailTemplate::class, 'sendSampleEmail']);
-		}
 	}
 
 	/**
@@ -65,7 +61,7 @@ class MailTemplate extends Post {
 			->publicQueryable(false)
 			->menuIcon('dashicons-email')
 			->hasArchive(false)
-			->metaboxCallback([static::class, 'registerMetaboxes'])
+			->menuPosition(5)
 			;
 	}
 
@@ -132,24 +128,6 @@ class MailTemplate extends Post {
 
 		return $builder->build();
 
-	}
-
-	/**
-	 * Registers any related metaboxes
-	 */
-	public static function registerMetaboxes() {
-		add_meta_box('mail-template-sender', 'Send Sample', [static::class, 'renderMailTemplateSender'], null, 'side', 'default');
-
-	}
-	//endregion
-
-	//region Metaboxes
-	/**
-	 * Render the metabox for sending a sample email
-	 * @param $post
-	 */
-	public static function renderMailTemplateSender($post) {
-		echo Context::current()->ui->render('meta-boxes/mail-template/sample-sender', ['post' => $post]);
 	}
 	//endregion
 
@@ -324,64 +302,6 @@ class MailTemplate extends Post {
 		}
 
 		return false;
-	}
-	//endregion
-
-	//region WordPress Admin
-
-	/**
-	 * Sends a sample email
-	 * @throws \Mailgun\Message\Exceptions\TooManyRecipients
-	 * @throws \Samrap\Acf\Exceptions\BuilderException
-	 */
-	public static function sendSampleEmail() {
-		if (!current_user_can('edit_posts')) {
-			wp_send_json(['status' => 'error', 'message' => 'Unauthorized.'], 403);
-		}
-
-		if (empty($_POST['nonce'])) {
-			wp_send_json(['status' => 'error', 'message' => 'Missing nonce.'], 400);
-		}
-
-		if (!wp_verify_nonce($_POST['nonce'], 'send-sample-email')) {
-			wp_send_json(['status' => 'error', 'message' => 'Invalid nonce.'], 403);
-		}
-
-		if (empty($_POST['email']) || empty($_POST['post'])) {
-			wp_send_json(['status' => 'error', 'message' => 'Missing email or post field.'], 400);
-		}
-
-		/** @var MailTemplate $template */
-		$template = MailTemplate::find($_POST['post']);
-		if (empty($template)) {
-			wp_send_json(['status' => 'error', 'message' => 'Missing template.'], 400);
-		}
-
-		$fieldsRegex = '/\{\{([aA-zZ0-9_-]+)\}\}/m';
-
-		$fields = [];
-
-		$text = $template->bodyText;
-		preg_match_all($fieldsRegex, $text, $matches, PREG_SET_ORDER, 0);
-		foreach($matches as $match) {
-			if (!isset($fields[$match[1]])) {
-				$fieldVal = ucwords(strtolower(str_replace('_', ' ', $match[1])));
-				$fields[$match[1]] = $fieldVal;
-			}
-		}
-
-		$text = $template->bodyHtml;
-		preg_match_all($fieldsRegex, $text, $matches, PREG_SET_ORDER, 0);
-		foreach($matches as $match) {
-			if (!isset($fields[$match[1]])) {
-				$fieldVal = ucwords(strtolower(str_replace('_', ' ', $match[1])));
-				$fields[$match[1]] = $fieldVal;
-			}
-		}
-
-		$template->send($_POST['email'], $fields);
-
-		wp_send_json(['status' => 'ok']);
 	}
 	//endregion
 }

@@ -13,7 +13,7 @@
             let data = {
                 nonce: '{!! wp_create_nonce('send-sample-email') !!}',
                 email: $('#sample-to-address').val(),
-                post: '{!! $post->ID !!}',
+                post: '{!! $post->id !!}',
                 action: 'send_sample_email'
             };
 
