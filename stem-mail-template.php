@@ -4,7 +4,7 @@ Plugin Name: Stem Mail Template
 Plugin URI: https://github.com/jawngee/the-wonder
 Description: Model for mail templates
 Author: interfacelab
-Version: 0.1.5
+Version: 0.1.6
 Author URI: http://interfacelab.io
 */
 
@@ -15,4 +15,6 @@ if (file_exists(STEM_MAIL_TEMPLATE_DIR.'/vendor/autoload.php')) {
 	require_once STEM_MAIL_TEMPLATE_DIR.'/vendor/autoload.php';
 }
 
-new \Stem\Packages\Package(STEM_MAIL_TEMPLATE_DIR, 'Mail Templates', 'Package providing user editable mail templates.');
+add_action('heavymetal/app/packages/install', function() {
+	new \Stem\Packages\Package(STEM_MAIL_TEMPLATE_DIR, 'Mail Templates', 'Package providing user editable mail templates.');
+});
