@@ -11,7 +11,7 @@
     ],
     "require": {
         "mailgun/mailgun-php": "^2.8",
-        "stem-press/stem": ">=0.5.7"
+        "stem-press/stem": ">=0.5.8"
     },
   "autoload": {
     "psr-4": {

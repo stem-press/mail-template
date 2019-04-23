@@ -4,7 +4,7 @@ Plugin Name: Stem Mail Template
 Plugin URI: https://github.com/jawngee/the-wonder
 Description: Model for mail templates
 Author: interfacelab
-Version: 0.1.6
+Version: 0.1.7
 Author URI: http://interfacelab.io
 */
 
