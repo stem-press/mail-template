@@ -204,6 +204,7 @@ class MailTemplate extends Post {
 		}
 
 		foreach($this->toEmails as $toEmail) {
+			$toSet=true;
 			$messageBldr->addToRecipient($toEmail->email);
 		}
 
