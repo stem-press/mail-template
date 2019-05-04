@@ -231,9 +231,14 @@ class MailTemplate extends Post {
 					file_put_contents($localPath, file_get_contents($url));
 				}
 
+				$ogUrl = $attachment->image->url;
+				$html = str_replace($ogUrl, "cid:$filename", $html);
+				$html = str_replace(str_replace('&', '&amp;', $ogUrl), "cid:$filename", $html);
+
 				$sizeUrls = $attachment->image->sizeUrls;
 				foreach($sizeUrls as $size => $url) {
 					$html = str_replace($url, "cid:$filename", $html);
+					$html = str_replace(str_replace('&', '&amp;', $url), "cid:$filename", $html);
 				}
 
 				$messageBldr->addInlineImage($localPath, $filename);
