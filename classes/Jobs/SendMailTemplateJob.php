@@ -11,6 +11,7 @@ class SendMailTemplateJob extends Job {
 	private $email;
 	private $data;
 	private $inline;
+	private $attachments;
 
 	/**
 	 * SendMailTemplateJob constructor.
@@ -19,12 +20,14 @@ class SendMailTemplateJob extends Job {
 	 * @param string|null $email
 	 * @param array $data
 	 * @param array $inline
+	 * @param array $attachments
 	 */
-	public function __construct($slug, $email = null, $data=[], $inline=[]) {
+	public function __construct($slug, $email = null, $data=[], $inline=[], $attachments=[]) {
 		$this->slug = $slug;
 		$this->email = $email;
 		$this->data = $data;
 		$this->inline = $inline;
+		$this->attachments = $attachments;
 	}
 
 	/**
@@ -33,7 +36,7 @@ class SendMailTemplateJob extends Job {
 	 */
 	public function run() {
 		try {
-			MailTemplate::sendTemplate($this->slug, $this->email, $this->data, $this->inline);
+			MailTemplate::sendTemplate($this->slug, $this->email, $this->data, $this->inline, $this->attachments);
 		} catch (\Exception $ex) {
 			return self::STATUS_ERROR;
 		}
@@ -50,8 +53,8 @@ class SendMailTemplateJob extends Job {
 	 * @param array $data
 	 * @param array $inline
 	 */
-	public static function queue($queue, $slug, $email = null, $data=[], $inline=[]) {
-		$job = new SendMailTemplateJob($slug, $email, $data, $inline);
+	public static function queue($queue, $slug, $email = null, $data=[], $inline=[], $attachments=[]) {
+		$job = new SendMailTemplateJob($slug, $email, $data, $inline, $attachments);
 		Queue::instance()->add($queue, $job);
 	}
 }

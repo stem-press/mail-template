@@ -164,12 +164,13 @@ class MailTemplate extends Post {
 	 * @param string|string[]|null $email
 	 * @param array $data
 	 * @param array $inline
+	 * @param array $attachments
 	 *
 	 * @return bool
 	 * @throws \Mailgun\Message\Exceptions\TooManyRecipients
 	 * @throws \Samrap\Acf\Exceptions\BuilderException
 	 */
-	public function send($email=null, $data=[], $inline=[]) {
+	public function send($email=null, $data=[], $inline=[], $attachments=[]) {
 		add_filter('max_srcset_image_width', function() { return 1; });
 
 		if ($this->status != 'publish') {
@@ -247,6 +248,10 @@ class MailTemplate extends Post {
 			$messageBldr->setHtmlBody($html);
 		}
 
+		foreach($attachments as $filename => $filepath) {
+			$messageBldr->addAttachment($filepath, $filename);
+		}
+
 		$messageBldr->setOpenTracking(true);
 		$messageBldr->setClickTracking(false);
 
@@ -288,21 +293,23 @@ class MailTemplate extends Post {
 	 * @param MailTemplate|string $slugOrTemplate
 	 * @param string|string[]|null $email
 	 * @param array $data
+	 * @param array $inline
+	 * @param array $attachments
 	 *
 	 * @return bool
 	 * @throws \Mailgun\Message\Exceptions\TooManyRecipients
 	 * @throws \Samrap\Acf\Exceptions\BuilderException
 	 */
-	public static function sendTemplate($slugOrTemplate, $email = null, $data=[], $inline=[]) {
+	public static function sendTemplate($slugOrTemplate, $email = null, $data=[], $inline=[], $attachments = []) {
 		if ($slugOrTemplate instanceof MailTemplate) {
-			return $slugOrTemplate->send($email, $data);
+			return $slugOrTemplate->send($email, $data, $inline, $attachments);
 		} else {
 			$templatePost = get_page_by_path($slugOrTemplate,OBJECT,'mail-template');
 			if (!empty($templatePost)) {
 				/** @var MailTemplate $template */
 				$template = Context::current()->modelForPost($templatePost);
 				if(!empty($template)) {
-					return $template->send($email, $data, $inline);
+					return $template->send($email, $data, $inline, $attachments);
 				}
 			}
 		}
