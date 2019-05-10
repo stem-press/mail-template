@@ -29,4 +29,9 @@ class MailTemplateLog {
 			'error' => $error
 		]);
 	}
+
+	public static function Clear() {
+		global $wpdb;
+		$wpdb->query('delete from stem_mail_template_log');
+	}
 }
