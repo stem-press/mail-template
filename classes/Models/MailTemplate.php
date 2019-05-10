@@ -4,7 +4,9 @@ namespace Stem\MailTemplates\Models;
 
 use Mailgun\Mailgun;
 use Mailgun\Message\MessageBuilder;
+use Mailgun\Model\Message\SendResponse;
 use Stem\Core\Context;
+use Stem\MailTemplates\Logging\MailTemplateLog;
 use Stem\Models\Attachment;
 use Stem\Models\Post;
 use Stem\Models\Utilities\CustomPostTypeBuilder;
@@ -177,6 +179,7 @@ class MailTemplate extends Post {
 			return false;
 		}
 
+
 		$smtpConfig = get_option('wp_mail_smtp');
 
 		$mailgunKey = arrayPath($smtpConfig, 'mailgun/api_key', null);
@@ -192,25 +195,31 @@ class MailTemplate extends Post {
 		$messageBldr = new MessageBuilder();
 		$messageBldr->setFromAddress($fromEmail, ['full_name' => $fromName]);
 
+		$logToEmails = [];
 		$toSet = false;
 		if ($email != null) {
 			$toSet=true;
 			if (is_array($email)) {
 				foreach($email as $emailAddress) {
+					$logToEmails[] = $emailAddress;
 					$messageBldr->addToRecipient($emailAddress);
 				}
 			} else {
+				$logToEmails[] = $email;
 				$messageBldr->addToRecipient($email);
 			}
 		}
 
 		foreach($this->toEmails as $toEmail) {
 			$toSet=true;
+			$logToEmails[] = $toEmail->email;
 			$messageBldr->addToRecipient($toEmail->email);
 		}
 
+		$logBccEmails = [];
 		foreach($this->bccEmails as $bccEmail) {
-			$messageBldr->addToRecipient($bccEmail->email);
+			$logBccEmails[] = $bccEmail->email;
+			$messageBldr->addBccRecipient($bccEmail->email);
 		}
 
 		$messageBldr->setSubject($this->subject);
@@ -261,9 +270,13 @@ class MailTemplate extends Post {
 
 		if ($toSet) {
 			$mg = Mailgun::create($mailgunKey);
-			$mg->messages()->send($domain, $messageBldr->getMessage());
 
+			/** @var SendResponse $response */
+			$response = $mg->messages()->send($domain, $messageBldr->getMessage());
+			MailTemplateLog::LogSuccess($response->getId(), $response->getMessage(), $this->slug, $logToEmails, $logBccEmails, $data);
 			return true;
+		} else {
+			MailTemplateLog::LogError($this->slug, $logToEmails, $logBccEmails, $data, 'No email addresses specified.');
 		}
 
 		return false;
@@ -310,7 +323,11 @@ class MailTemplate extends Post {
 				$template = Context::current()->modelForPost($templatePost);
 				if(!empty($template)) {
 					return $template->send($email, $data, $inline, $attachments);
+				} else {
+					MailTemplateLog::LogError($slugOrTemplate, [$email], null, $data, 'Template not found.');
 				}
+			} else {
+				MailTemplateLog::LogError($slugOrTemplate, [$email], null, $data, 'Template not found.');
 			}
 		}
 
