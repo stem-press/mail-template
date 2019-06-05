@@ -12,7 +12,7 @@
     "require": {
         "mailgun/mailgun-php": "^2.8",
         "php-http/guzzle6-adapter": ">=v1.1.1",
-        "stem-press/stem": ">=0.7.1"
+        "stem-press/stem": ">=0.7.2"
     },
   "autoload": {
     "psr-4": {
