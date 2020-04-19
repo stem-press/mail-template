@@ -179,7 +179,6 @@ class MailTemplate extends Post {
 			return false;
 		}
 
-
 		$smtpConfig = get_option('wp_mail_smtp');
 
 		$mailgunKey = arrayPath($smtpConfig, 'mailgun/api_key', null);
@@ -188,7 +187,6 @@ class MailTemplate extends Post {
 		$fromName = arrayPath($smtpConfig, 'mail/from_name', null);
 
 		if (empty($mailgunKey) || empty($domain) || empty($fromEmail) || empty($fromName)) {
-			error_log('Missing config for mailgun.');
 			return false;
 		}
 
@@ -222,7 +220,8 @@ class MailTemplate extends Post {
 			$messageBldr->addBccRecipient($bccEmail->email);
 		}
 
-		$messageBldr->setSubject($this->subject);
+		$subject = $this->applyData($this->subject, $data);
+		$messageBldr->setSubject($subject);
 
 		if (!empty($this->bodyText)) {
 			$messageBldr->setTextBody($this->applyData($this->bodyText, $data));
