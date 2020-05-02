@@ -131,6 +131,31 @@ class MailTemplate extends Post {
 		return $builder->build();
 
 	}
+
+
+
+	/**
+	 * Allows custom columns to be added to the editing screen
+	 *
+	 * @param $columns
+	 *
+	 * @return mixed
+	 */
+	public static function customColumns($columns) {
+		$columns = insertKeyedArrayBeforeKey(['slug' => 'Template ID'], $columns,  ['tsf-seo-bar-wrap', 'date']);
+		return $columns;
+	}
+
+	/**
+	 * Renders the value for a custom column
+	 *
+	 * @param $column
+	 */
+	public function renderCustomColumn($column) {
+		if ($column == 'slug') {
+			echo $this->slug;
+		}
+	}
 	//endregion
 
 	//region Template Rendering
